@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>talabat mart – Ganesh’s reorder list</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#ff5e00; --orange-d:#e04f00; --ink:#1f1f1f; --muted:#767676; --line:#e6e6e6;
+  --lime:#d4ff00; --bg:#fff; --card:#f4f4f4; --gap:16px; --cw:calc((min(100vw,430px) - 40px) / 3.2);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:var(--ink);background:#e9e9ec}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
+img{display:block}
+.app{position:relative;max-width:430px;margin:0 auto;background:var(--bg);min-height:100vh;padding-bottom:150px;overflow:hidden}
+.static{width:100%}
+.static.header{margin-bottom:0}
+.banner{margin-top:16px;padding:12px 16px}
+.banner img{width:100%;border-radius:16px}
+.section{padding:12px 0}
+.section.alt{margin-top:0}
+.gapbar{height:80px;background:#faf6f0}
+.sec-head{display:flex;align-items:flex-start;justify-content:space-between;padding:2px 16px 0;min-height:42px}
+.sec-head h2{margin:0;font-size:20px;line-height:26px;font-weight:700;letter-spacing:-.2px}
+.sec-head .viewall{padding-top:5px;font-size:14px;font-weight:500;text-decoration:underline;text-underline-offset:3px}
+
+/* category tabs */
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:0 16px 12px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 72px;text-align:center}
+.tab .ring{width:64px;height:64px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;background:#f1f1f1;border:2px solid transparent;transition:.15s}
+.tab .ring img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.tab.active .ring{border-color:var(--ink);background:#fff;padding:3px}
+.tab .lbl{display:block;margin-top:8px;font-size:14px;line-height:16px;color:var(--muted);font-weight:500}
+.tab.active .lbl{color:var(--ink);font-weight:700}
+
+/* lanes */
+.lane{display:flex;gap:8px;overflow-x:auto;padding:0 16px 4px;scrollbar-width:none;scroll-snap-type:x proximity;scroll-padding-left:16px}
+.lane::-webkit-scrollbar{display:none}
+.grid2{display:grid;grid-template-rows:auto auto;grid-auto-flow:column;grid-auto-columns:var(--cw);gap:4px 8px;overflow-x:auto;padding:0 16px;scrollbar-width:none}
+.grid2::-webkit-scrollbar{display:none}
+.lane .card{flex:0 0 var(--cw);scroll-snap-align:start}
+
+/* card */
+.card{width:var(--cw);position:relative;min-height:204px}
+.media{position:relative;width:var(--cw);height:var(--cw);border-radius:16px;overflow:hidden;background:var(--card);border:1px solid #ececec;cursor:pointer}
+.media img.pic{width:100%;height:100%;object-fit:cover}
+.save{position:absolute;left:8px;top:8px;background:var(--lime);color:#1a1a1a;font-size:12px;line-height:16px;font-weight:600;padding:2px 8px;border-radius:4px}
+.add{position:absolute;right:8px;bottom:8px;height:40px;min-width:40px;border-radius:20px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;overflow:hidden;transition:width .18s}
+.add .plus{width:40px;height:40px;display:flex;align-items:center;justify-content:center}
+.add svg{width:20px;height:20px;stroke:var(--orange);stroke-width:2.4;fill:none;stroke-linecap:round}
+.add .q{min-width:22px;text-align:center;font-weight:700;font-size:14px;color:var(--ink)}
+.add.has{padding:0 2px}
+.add.has .plus{width:32px}
+.add.has .plus svg{width:18px}
+.title{margin-top:8px;font-size:13px;line-height:16px;font-weight:500;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:32px;cursor:pointer}
+.desc{margin-top:0;font-size:12px;line-height:16px;color:var(--muted)}
+.price{margin-top:4px;font-size:16px;line-height:24px;font-weight:700}
+.price .cur{font-weight:600}
+.price.disc .now{background:linear-gradient(transparent 80%,var(--lime) 80%,var(--lime) 92%,transparent 92%)}
+.was{font-size:12px;line-height:16px;color:var(--muted);text-decoration:line-through;height:16px}
+
+.btn-outline{display:block;margin:8px auto;width:calc(100% - 32px);height:40px;border:1px solid #e5e5e5;border-radius:100px;font-weight:600;font-size:14px;line-height:16px;color:#262626;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.08),0 0 6px rgba(0,0,0,.10),0 0 1px rgba(0,0,0,.02);transition:.12s}
+.btn-outline:active{background:#f3f3f3}
+
+.brands{display:block;width:100%;margin-top:16px}
+.brands-wrap{overflow-x:auto;scrollbar-width:none}
+
+/* footer */
+.footer{position:fixed;left:50%;bottom:0;transform:translate(-50%,110%);width:100%;max-width:430px;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -4px 16px rgba(0,0,0,.12);padding:12px 16px calc(14px + env(safe-area-inset-bottom));z-index:60;transition:transform .25s}
+.footer.show{transform:translate(-50%,0)}
+.offer{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;padding:0 0 8px}
+.offer svg{width:18px;height:18px;flex:none;fill:none;stroke:#222;stroke-width:1.8}
+.offer .info{margin-left:auto;width:18px;height:18px}
+.bar{height:4px;border-radius:2px;background:#e6e6e6;overflow:hidden;margin-bottom:12px}
+.bar i{display:block;height:100%;width:0;background:var(--ink);transition:width .3s}
+.cartbtn{width:100%;height:52px;border-radius:26px;background:var(--orange);color:#fff;display:flex;align-items:center;padding:0 12px;gap:12px;font-weight:700;font-size:16px;transition:background .12s}
+.cartbtn:active{background:var(--orange-d)}
+.cartbtn .n{width:32px;height:32px;border-radius:50%;background:#c24300;display:flex;align-items:center;justify-content:center;font-size:15px}
+.cartbtn .tot{margin-left:auto;text-align:right;line-height:18px}
+.cartbtn .tot small{display:block;font-size:12px;font-weight:500;text-decoration:line-through;opacity:.9}
+
+/* sheets */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.57);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.overlay.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:50%;bottom:0;transform:translate(-50%,100%);width:100%;max-width:430px;height:85vh;height:85dvh;background:#fff;border-radius:24px 24px 0 0;z-index:50;display:flex;flex-direction:column;transition:transform .28s cubic-bezier(.2,.8,.2,1);overflow:hidden}
+.sheet.show{transform:translate(-50%,0)}
+.sheet.small{height:auto;max-height:80vh}
+.grab{position:absolute;left:50%;top:8px;width:44px;height:4px;border-radius:100px;background:#d6d6d6;transform:translateX(-50%)}
+.sheet-head{position:relative;display:flex;align-items:center;gap:16px;height:68px;padding:12px 16px 0;flex:none;z-index:2;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.sheet-head h3{margin:0;font-size:16px;line-height:24px;font-weight:500}
+.close{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex:none}
+.close svg{width:18px;height:18px;stroke:#222;stroke-width:2;fill:none;stroke-linecap:round}
+.split{display:flex;flex:1;min-height:0}
+.rail{width:100px;flex:none;border-right:1px solid var(--line);overflow-y:auto;padding:12px 16px 170px 12px;display:flex;flex-direction:column;gap:8px;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rail .tab{flex:none;width:72px}
+.rail .tab .lbl{width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stack{flex:1;min-width:0;overflow-y:auto;padding:12px 12px 170px}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 8px;align-items:start}
+.pgrid .card{width:100%;min-height:0}
+.pgrid .media{width:100%;height:auto;aspect-ratio:1}
+.detail{padding:0 16px 24px}
+.detail .big{position:relative;width:100%;aspect-ratio:1;max-height:300px;border-radius:20px;overflow:hidden;background:var(--card)}
+.detail .big img{width:100%;height:100%;object-fit:cover}
+.detail h4{margin:16px 0 4px;font-size:20px;line-height:26px}
+.detail .d{color:var(--muted);font-size:14px}
+.detail .pr{display:flex;align-items:baseline;gap:8px;margin:8px 0 16px;font-size:22px;font-weight:700}
+.detail .pr s{font-size:14px;color:var(--muted);font-weight:500}
+.detail .row{display:flex;gap:12px;align-items:center}
+.qty{display:flex;align-items:center;border:1px solid #d9d9d9;border-radius:26px;height:52px}
+.qty button{width:48px;height:50px;font-size:22px;font-weight:600;color:var(--orange)}
+.qty span{min-width:28px;text-align:center;font-weight:700}
+.primary{flex:1;height:52px;border-radius:26px;background:var(--orange);color:#fff;font-weight:700;font-size:16px}
+.primary:active{background:var(--orange-d)}
+.cart-list{overflow-y:auto;padding:0 16px 24px}
+.crow{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #f0f0f0}
+.crow img{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--card)}
+.crow .t{flex:1;font-size:13px;font-weight:600;line-height:18px}
+.crow .t small{display:block;color:var(--muted);font-weight:400}
+.crow .p{font-weight:700;font-size:14px;min-width:64px;text-align:right}
+.mini{display:flex;align-items:center;border:1px solid #d9d9d9;border-radius:16px;height:32px}
+.mini button{width:28px;height:30px;font-size:16px;font-weight:700;color:var(--orange)}
+.mini span{min-width:18px;text-align:center;font-size:13px;font-weight:700}
+.sumrow{display:flex;justify-content:space-between;padding:14px 0 0;font-weight:700}
+.empty{text-align:center;color:var(--muted);padding:40px 0}
+.toast{position:fixed;left:50%;bottom:180px;transform:translate(-50%,20px);background:#222;color:#fff;padding:10px 16px;border-radius:20px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:80;white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.brands-wrap{margin-top:0}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <img class="static header" src="img/header.png" alt="talabat mart header">
+  <div class="banner"><img src="img/banner.png" alt="Heinz – Make plays"></div>
+
+  <!-- Section 1: two-row grid -->
+  <section class="section" id="s1">
+    <div class="sec-head"><h2>Ganesh’s reorder list</h2><button class="viewall" data-viewall></button></div>
+    <div class="grid2" id="grid1"></div>
+  </section>
+
+  <div class="gapbar"></div>
+
+  <!-- Section 2: tabs + lane -->
+  <section class="section" id="s2">
+    <div class="sec-head"><h2>Ganesh’s reorder list</h2><button class="viewall" data-viewall></button></div>
+    <div class="tabs" id="tabs2"></div>
+    <div class="lane" id="lane2"></div>
+  </section>
+
+  <div class="gapbar"></div>
+
+  <!-- Section 3: tabs + lane + view all button -->
+  <section class="section" id="s3">
+    <div class="sec-head"><h2>Ganesh’s reorder list</h2></div>
+    <div class="tabs" id="tabs3"></div>
+    <div class="lane" id="lane3"></div>
+    <button class="btn-outline" data-viewall>View all products</button>
+  </section>
+
+  <div class="brands-wrap"><img class="brands" src="img/brands.png" alt="Popular brands" style="width:100%;margin-top:16px"></div>
+</div>
+
+<!-- Footer cart bar -->
+<div class="footer" id="footer">
+  <div class="offer">
+    <svg viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8L3 12z"/><circle cx="8" cy="9" r="1.2"/></svg>
+    <span id="offerText"></span>
+    <svg class="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5" stroke-linecap="round"/></svg>
+  </div>
+  <div class="bar"><i id="bar"></i></div>
+  <button class="cartbtn" id="cartbtn"><span class="n" id="cn">0</span><span>View cart</span><span class="tot"><small id="was"></small><span id="tot"></span></span></button>
+</div>
+
+<div class="overlay" id="overlay"></div>
+
+<!-- View-all sheet -->
+<div class="sheet" id="sheetAll" role="dialog" aria-label="Ganesh’s reorder list">
+  <div class="grab"></div>
+  <div class="sheet-head"><button class="close" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg></button><h3>Buy again</h3></div>
+  <div class="split">
+    <div class="rail" id="railAll"></div>
+    <div class="stack" id="stackAll"><div class="pgrid" id="gridAll"></div></div>
+  </div>
+</div>
+
+<!-- Product detail -->
+<div class="sheet small" id="sheetDetail" role="dialog">
+  <div class="grab"></div>
+  <div class="sheet-head"><button class="close" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg></button><h3>Product details</h3></div>
+  <div class="detail" id="detail"></div>
+</div>
+
+<!-- Cart -->
+<div class="sheet" id="sheetCart" role="dialog" style="height:auto;max-height:80vh">
+  <div class="grab"></div>
+  <div class="sheet-head"><button class="close" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg></button><h3>Your cart</h3></div>
+  <div class="cart-list" id="cartList"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const FREE_DELIVERY = 100;
+const P = [
+ // id, name, size, price, was, save, img, tabs
+ ['apple','Pink Lady Apple - Europe/USA','900-1100g',8.76,10.95,'Save 20%','apple',['top']],
+ ['avocado','Avocado Hass Premium - Mexico','500-600g',21.50,0,'','avocado',['top','veg']],
+ ['grapes','Red Grapes Seedless - Australia','500-550g',28.85,33.95,'Save 15%','grapes',['top']],
+ ['lemon','Lemon - Lebanon','450-550g',7.95,0,'','lemon',['top','veg']],
+ ['navel','Orange Navel - South Africa','900-1100g',10.25,0,'','orange',['top','juice']],
+ ['mango','Mango Palmer Half Ripe - South Africa','900-1100g',36.95,0,'','mango',['top']],
+ ['gala','Apple Royal Gala - France','900-1100g',13.25,0,'','apple',['top']],
+ ['valencia','Orange Valencia - South Africa','900-1100g',12.50,0,'','orange',['top']],
+ ['banana','Banana Chiquita, Medium Ripe','900-1100g',6.75,0,'','banana',['top']],
+ ['straw','Pure Harvest Strawberries - UAE','200g',14.90,0,'','straw',['top']],
+ ['dates','Medjool Dates - Jordan','500g',24.95,0,'','dates',['top']],
+ ['apricot','Dried Apricots - Turkey','250g',12.95,0,'','dates',['top']],
+ ['tomato','Tomato Cherry Red - UAE','250g',4.95,6.00,'Save 17%','tomato',['veg']],
+ ['herbs','Fresh Parsley Bunch - UAE','1 bunch',2.50,0,'','herbs',['veg']],
+ ['mint','Fresh Mint Bunch - UAE','1 bunch',2.75,0,'','herbs',['veg']],
+ ['milk','Almarai Fresh Milk Full Fat','1 L',7.25,0,'','milk',['dairy']],
+ ['milk2','Almarai Fresh Milk Low Fat','1 L',7.25,0,'','milk',['dairy']],
+ ['milk3','Al Rawabi Fresh Milk Full Fat','2 L',13.50,0,'','milk',['dairy']],
+ ['bread','Modern Bakery Brown Toast Bread','600 g',5.50,7.00,'Save 21%','bread',['bakery']],
+ ['bread2','Modern Bakery White Toast Bread','600 g',5.50,0,'','bread',['bakery']],
+ ['bread3','Modern Bakery Wholemeal Sliced Loaf','400 g',4.75,0,'','bread',['bakery']],
+ ['oj','Al Rawabi Fresh Orange Juice','1 L',11.50,0,'','oj',['juice']],
+ ['oj2','Al Rawabi Fresh Orange Juice','200 ml',3.50,0,'','oj',['juice']],
+ ['oj3','Fresh Pressed Orange Juice','330 ml',8.95,0,'','oj',['juice']],
+].map(([id,name,size,price,was,save,img,tabs])=>({id,name,size,price,was,save,img,tabs}));
+const SHEET = [
+ ['best','Top items','orange',['apple','valencia','grapes','lemon','avocado','mango','gala','navel','banana','straw','dates','apricot']],
+ ['fruit','Fruits','apple',['apple','gala','navel','valencia','banana','straw','grapes','lemon','mango']],
+ ['veg','Vegetables','tomato',['tomato','avocado','herbs','mint']],
+ ['herbs','Herbs','herbs',['herbs','mint']],
+ ['juice','Juice','oj',['oj','oj2','oj3']],
+ ['dates','Dates & Dried Fruit','dates',['dates','apricot']]];
+const GRID1 = ['apple','avocado','grapes','lemon','banana','straw','navel','mango','gala','valencia','dates','apricot'];
+const BY = Object.fromEntries(P.map(p=>[p.id,p]));
+
+const cart = {};            // id -> qty
+const tabState = {2:'best',3:'best'};
+const $ = s=>document.querySelector(s);
+const aed = n=>'Đ '+n.toFixed(2);
+
+const ICON_PLUS='<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
+const ICON_MINUS='<svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>';
+
+function cardHTML(p){
+  const q = cart[p.id]||0, disc = p.was>0;
+  return `<div class="card" data-id="${p.id}">
+    <div class="media" data-open>
+      <img class="pic" src="img/${p.img}.jpg" alt="" loading="lazy">
+      ${p.save?`<span class="save">${p.save}</span>`:''}
+      <div class="add ${q?'has':''}">
+        ${q?`<button class="plus" data-dec aria-label="Remove one">${ICON_MINUS}</button><span class="q">${q}</span>`:''}
+        <button class="plus" data-inc aria-label="Add">${ICON_PLUS}</button>
+      </div>
+    </div>
+    <div class="title" data-open>${p.name}</div>
+    <div class="desc">${p.size}</div>
+    <div class="price ${disc?'disc':''}"><span class="now"><span class="cur">Đ</span> ${p.price.toFixed(2)}</span></div>
+    <div class="was">${disc?'Đ '+p.was.toFixed(2):''}</div>
+  </div>`;
+}
+const list = tab => SHEET.find(t=>t[0]===tab)[3].map(id=>BY[id]);
+
+function tabsHTML(n){
+  return SHEET.map(([k,l,i])=>`<button class="tab ${tabState[n]===k?'active':''}" data-tab="${k}" data-sec="${n}"><span class="ring"><img src="img/${i}.jpg" alt=""></span><span class="lbl">${l}</span></button>`).join('');
+}
+function renderSections(){
+  const g=GRID1.map(id=>BY[id]), rowA=g.slice(0,6), rowB=g.slice(6,12);
+  $('#grid1').innerHTML = rowA.flatMap((p,i)=>[p,rowB[i]]).map(cardHTML).join('');
+  for(const n of [2,3]){
+    $('#tabs'+n).innerHTML = tabsHTML(n);
+    $('#lane'+n).innerHTML = list(tabState[n]).map(cardHTML).join('');
+  }
+  document.querySelectorAll('[data-viewall]').forEach(b=>{ if(b.classList.contains('viewall')) b.textContent=`View all (${P.length})`; });
+}
+
+/* ---- cart math ---- */
+function totals(){
+  let n=0,t=0,w=0;
+  for(const [id,q] of Object.entries(cart)){ const p=BY[id]; n+=q; t+=p.price*q; w+=(p.was||p.price)*q; }
+  return {n,t,w};
+}
+function updateFooter(){
+  const {n,t,w}=totals();
+  $('#footer').classList.toggle('show',n>0);
+  $('#cn').textContent=n;
+  $('#tot').textContent=aed(t);
+  $('#was').textContent = w>t ? aed(w) : '';
+  const left=FREE_DELIVERY-t;
+  $('#offerText').textContent = left>0 ? `Add ${aed(left)} to get free delivery` : 'You\'ve unlocked free delivery';
+  $('#bar').style.width = Math.min(100,t/FREE_DELIVERY*100)+'%';
+}
+function setQty(id,q){
+  if(q<=0) delete cart[id]; else cart[id]=Math.min(q,20);
+  refreshCards(id); updateFooter(); if($('#sheetCart').classList.contains('show')) renderCart(); renderDetail();
+}
+function refreshCards(id){
+  document.querySelectorAll(`.card[data-id="${id}"]`).forEach(c=>{
+    const q=cart[id]||0, add=c.querySelector('.add');
+    add.classList.toggle('has',q>0);
+    add.innerHTML=(q?`<button class="plus" data-dec aria-label="Remove one">${ICON_MINUS}</button><span class="q">${q}</span>`:'')+`<button class="plus" data-inc aria-label="Add">${ICON_PLUS}</button>`;
+  });
+}
+
+/* ---- sheets ---- */
+let activeSheet=null, sheetTab='best', detailId=null;
+function openSheet(id){
+  closeSheets(true); activeSheet=$(id); $('#overlay').classList.add('show'); activeSheet.classList.add('show');
+}
+function closeSheets(silent){
+  document.querySelectorAll('.sheet.show').forEach(s=>s.classList.remove('show'));
+  $('#overlay').classList.remove('show'); activeSheet=null;
+}
+function renderAll(){
+  $('#railAll').innerHTML=SHEET.map(([k,l,img])=>`<button class="tab ${sheetTab===k?'active':''}" data-stab="${k}"><span class="ring"><img src="img/${img}.jpg" alt=""></span><span class="lbl">${l}</span></button>`).join('');
+  const ids=SHEET.find(t=>t[0]===sheetTab)[3];
+  $('#gridAll').innerHTML=ids.map(id=>cardHTML(BY[id])).join('');
+  $('#stackAll').scrollTop=0;
+}
+function renderDetail(){
+  if(!detailId||!$('#sheetDetail').classList.contains('show')) return;
+  const p=BY[detailId], q=cart[p.id]||0;
+  $('#detail').innerHTML=`
+    <div class="big"><img src="img/${p.img}.jpg" alt=""></div>
+    <h4>${p.name}</h4><div class="d">${p.size}</div>
+    <div class="pr"><span>${aed(p.price)}</span>${p.was?`<s>${aed(p.was)}</s>`:''}</div>
+    <div class="row">
+      <div class="qty"><button data-d-dec>−</button><span>${q||1}</span><button data-d-inc>+</button></div>
+      <button class="primary" data-d-add>${q?'Update cart':'Add to cart'}</button>
+    </div>`;
+}
+let detailQty=1;
+function openDetail(id){
+  detailId=id; detailQty=cart[id]||1; openSheet('#sheetDetail'); renderDetail2();
+}
+function renderDetail2(){
+  const p=BY[detailId], inCart=cart[p.id]||0;
+  $('#detail').innerHTML=`
+    <div class="big"><img src="img/${p.img}.jpg" alt=""></div>
+    <h4>${p.name}</h4><div class="d">${p.size}</div>
+    <div class="pr"><span>${aed(p.price)}</span>${p.was?`<s>${aed(p.was)}</s>`:''}</div>
+    <div class="row">
+      <div class="qty"><button data-d-dec>−</button><span>${detailQty}</span><button data-d-inc>+</button></div>
+      <button class="primary" data-d-add>${inCart?'Update cart':'Add to cart'} · ${aed(p.price*detailQty)}</button>
+    </div>`;
+}
+// keep detail in sync with the simple renderer above
+renderDetail = function(){ if(detailId && $('#sheetDetail').classList.contains('show')) renderDetail2(); };
+
+function renderCart(){
+  const ids=Object.keys(cart);
+  if(!ids.length){ $('#cartList').innerHTML='<div class="empty">Your cart is empty</div>'; return; }
+  const {t,w}=totals();
+  $('#cartList').innerHTML=ids.map(id=>{const p=BY[id],q=cart[id];return `<div class="crow" data-id="${id}">
+    <img src="img/${p.img}.jpg" alt=""><div class="t">${p.name}<small>${p.size}</small></div>
+    <div class="mini"><button data-c-dec>−</button><span>${q}</span><button data-c-inc>+</button></div>
+    <div class="p">${aed(p.price*q)}</div></div>`}).join('')+
+    `<div class="sumrow"><span>Total</span><span>${aed(t)}</span></div>
+     ${w>t?`<div style="color:#1a8f3c;font-size:13px;font-weight:600;margin-top:4px;text-align:right">You save ${aed(w-t)}</div>`:''}
+     <div style="display:flex;gap:12px;margin-top:16px"><button class="btn-outline" style="margin:0;flex:1" data-clear>Clear cart</button><button class="primary" data-checkout>Checkout</button></div>`;
+}
+let toastT;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1600); }
+
+/* ---- events ---- */
+document.addEventListener('click',e=>{
+  const t=e.target;
+  const card=t.closest('.card');
+  if(t.closest('[data-inc]')&&card){ e.stopPropagation(); const id=card.dataset.id; setQty(id,(cart[id]||0)+1); return; }
+  if(t.closest('[data-dec]')&&card){ e.stopPropagation(); const id=card.dataset.id; setQty(id,(cart[id]||0)-1); return; }
+  if(t.closest('[data-open]')&&card){ openDetail(card.dataset.id); return; }
+  const tab=t.closest('[data-tab]');
+  if(tab){ const n=tab.dataset.sec; tabState[n]=tab.dataset.tab;
+    $('#tabs'+n).innerHTML=tabsHTML(n); const lane=$('#lane'+n); lane.innerHTML=list(tabState[n]).map(cardHTML).join(''); lane.scrollTo({left:0}); return; }
+  if(t.closest('[data-viewall]')){ renderAll(); openSheet('#sheetAll'); return; }
+  const stab=t.closest('[data-stab]');
+  if(stab){ sheetTab=stab.dataset.stab; renderAll(); return; }
+  if(t.closest('[data-close]')||t===$('#overlay')){ closeSheets(); return; }
+  if(t.closest('#cartbtn')){ renderCart(); openSheet('#sheetCart'); return; }
+  if(t.closest('[data-d-dec]')){ detailQty=Math.max(1,detailQty-1); renderDetail2(); return; }
+  if(t.closest('[data-d-inc]')){ detailQty=Math.min(20,detailQty+1); renderDetail2(); return; }
+  if(t.closest('[data-d-add]')){ setQty(detailId,detailQty); toast('Cart updated'); closeSheets(); return; }
+  const row=t.closest('.crow');
+  if(t.closest('[data-c-inc]')&&row){ setQty(row.dataset.id,(cart[row.dataset.id]||0)+1); return; }
+  if(t.closest('[data-c-dec]')&&row){ setQty(row.dataset.id,(cart[row.dataset.id]||0)-1); if(!Object.keys(cart).length) closeSheets(); return; }
+  if(t.closest('[data-clear]')){ Object.keys(cart).forEach(id=>{delete cart[id];refreshCards(id)}); updateFooter(); closeSheets(); toast('Cart cleared'); return; }
+  if(t.closest('[data-checkout]')){ toast('Checkout is not part of this prototype'); return; }
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeSheets(); });
+
+renderSections(); updateFooter();
+</script>
+</body>
+</html>

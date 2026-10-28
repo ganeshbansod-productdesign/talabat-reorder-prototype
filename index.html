@@ -26,15 +26,12 @@ img{display:block}
 .gapbar{height:80px;background:#faf6f0}
 .sec-head{display:flex;align-items:flex-start;justify-content:space-between;padding:2px 16px 0;min-height:42px}
 .sec-head h2{margin:0;font-size:20px;line-height:26px;font-weight:700;letter-spacing:-.2px;display:inline-block;color:var(--ink);background-image:linear-gradient(100deg,var(--ink) 0%,var(--ink) 28%,#ff5e00 42%,#ffb020 50%,#ff5e00 58%,var(--ink) 72%,var(--ink) 100%);background-size:300% 100%;background-position:100% 0;-webkit-background-clip:text;background-clip:text}
-.sec-head h2.shine{color:transparent;-webkit-text-fill-color:transparent;animation:shine 1.7s cubic-bezier(.4,.05,.25,1) both}
+.sec-head h2.shine{color:transparent;-webkit-text-fill-color:transparent;animation:shine 1.5s cubic-bezier(.45,.05,.25,1) both}
 @keyframes shine{
-  0%{background-position:100% 0;filter:drop-shadow(0 0 0 rgba(255,94,0,0));transform:translateY(0) scale(1)}
-  22%{transform:translateY(-6px) scale(1.04)}
-  40%{transform:translateY(0) scale(.99)}
-  52%{filter:drop-shadow(0 0 7px rgba(255,140,30,.45));transform:translateY(-3px) scale(1.02)}
-  66%{transform:translateY(0) scale(1)}
-  78%{transform:translateY(-1px) scale(1.005)}
-  100%{background-position:0% 0;filter:drop-shadow(0 0 0 rgba(255,94,0,0));transform:translateY(0) scale(1)}
+  0%{background-position:100% 0;filter:drop-shadow(0 0 0 rgba(255,94,0,0))}
+  50%{filter:drop-shadow(0 0 7px rgba(255,140,30,.45))}
+  100%{background-position:0% 0;filter:drop-shadow(0 0 0 rgba(255,94,0,0))}
+}
 }
 }
 .sec-head h2{transform-origin:left center}
@@ -154,6 +151,25 @@ img{display:block}
 .viewall.nudge{animation:nudge 1.1s ease-in-out 3}
 @keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(-3px);text-decoration-color:var(--orange)}}
 @media (prefers-reduced-motion:reduce){.tip.show{animation:none}.viewall.nudge{animation:none}}
+
+/* per-letter title animations */
+.sec-head h2.split{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--ink);-webkit-text-fill-color:var(--ink)}
+.sec-head h2.split .ch{display:inline-block}
+.sec-head h2.split .sp{display:inline-block;width:.27em}
+/* typewriter */
+.sec-head h2.type .ch{opacity:0;animation:chIn .01s steps(1) forwards;animation-delay:calc(var(--i)*55ms)}
+@keyframes chIn{to{opacity:1}}
+.sec-head h2.type::after{content:"";display:inline-block;width:2px;height:.95em;margin-left:2px;vertical-align:-.1em;background:var(--orange);animation:caret .5s steps(1) infinite,caretOff .01s linear forwards;animation-delay:0s,calc(var(--n)*55ms + 650ms)}
+@keyframes caret{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes caretOff{to{visibility:hidden}}
+/* wave */
+.sec-head h2.wave .ch{animation:wave 1s ease-in-out both;animation-delay:calc(var(--i)*45ms)}
+@keyframes wave{
+  0%,100%{transform:translateY(0);color:var(--ink);-webkit-text-fill-color:var(--ink)}
+  35%{transform:translateY(-4px);color:#ff5e00;-webkit-text-fill-color:#ff5e00}
+  65%{transform:translateY(1.5px);color:#ff8a2a;-webkit-text-fill-color:#ff8a2a}
+}
+@media (prefers-reduced-motion:reduce){.sec-head h2.type .ch,.sec-head h2.wave .ch{animation:none;opacity:1}.sec-head h2.type::after{display:none}}
 </style>
 </head>
 <body>
@@ -424,33 +440,39 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeSheets(); });
 
 renderSections(); updateFooter();
 
-/* one-time tooltip that points at "View all" */
+/* tooltip pointing at "View all": shows every time the section scrolls into view */
 (function(){
-  const tip=document.getElementById('tip'), link=document.querySelector('#s1 .viewall');
-  if(!tip||!link) return;
-  let done=false, timer;
-  const hide=()=>{ if(done) return; done=true; clearTimeout(timer); tip.classList.remove('show'); link.classList.remove('nudge'); try{sessionStorage.setItem('tipSeen','1')}catch(e){} };
-  if((()=>{try{return sessionStorage.getItem('tipSeen')}catch(e){return null}})()) return;
-  const io=new IntersectionObserver(es=>{ if(es.some(e=>e.isIntersecting)&&!done&&!tip.classList.contains('show')){
-      io.disconnect(); timer=setTimeout(()=>{ if(done) return; window.__tipY=scrollY; tip.classList.add('show'); link.classList.add('nudge'); tip.setAttribute('aria-hidden','false'); timer=setTimeout(hide,6000); },1700); }
-  },{threshold:1,rootMargin:'0px 0px -15% 0px'});
-  io.observe(document.querySelector('#s1 .sec-head'));
-  tip.addEventListener('click',()=>{hide();link.click()});
-  document.addEventListener('click',e=>{ if(tip.classList.contains('show')&&!tip.contains(e.target)) hide(); },true);
-  window.addEventListener('scroll',()=>{ if(tip.classList.contains('show')&&Math.abs(scrollY-window.__tipY)>140) hide(); },{passive:true});
+  const tip=document.getElementById('tip'), link=document.querySelector('#s1 .viewall'), head=document.querySelector('#s1 .sec-head');
+  if(!tip||!link||!head) return;
+  let timer, hideTimer, dismissed=false, y0=0;
+  const show=()=>{ if(dismissed) return; y0=scrollY; tip.classList.add('show'); link.classList.add('nudge'); tip.setAttribute('aria-hidden','false'); hideTimer=setTimeout(()=>hide(true),7000); };
+  const hide=(dismiss)=>{ clearTimeout(timer); clearTimeout(hideTimer); tip.classList.remove('show'); link.classList.remove('nudge'); tip.setAttribute('aria-hidden','true'); if(dismiss) dismissed=true; };
+  const io=new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting){ dismissed=false; clearTimeout(timer); timer=setTimeout(show,900); }
+    else hide(false);                       /* leaving view resets it, so it shows again next time */
+  }),{threshold:.6});
+  io.observe(head);
+  tip.addEventListener('click',()=>{ hide(true); link.click(); });
+  document.addEventListener('click',e=>{ if(tip.classList.contains('show')&&!tip.contains(e.target)) hide(true); },true);
 })();
-/* title shine when a section scrolls into view */
+/* title animations when a section scrolls into view: 1 = typewriter, 2 = wave, 3 = glow sweep */
 (function(){
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const modes={s1:'type',s2:'wave',s3:'shine'};
+  const split=h=>{ const t=h.textContent; h.setAttribute('aria-label',t); h.textContent=''; let n=0;
+    [...t].forEach(c=>{ const sp=document.createElement('span'); sp.setAttribute('aria-hidden','true');
+      if(c===' '){ sp.className='sp'; sp.textContent='\u00a0'; } else { sp.className='ch'; sp.style.setProperty('--i',n++); sp.textContent=c; }
+      h.appendChild(sp); }); h.style.setProperty('--n',n); h.classList.add('split'); return n; };
+  const targets=[...document.querySelectorAll('.sec-head h2')].map(h=>{ const mode=modes[h.closest('section').id]||'shine'; if(mode!=='shine') split(h); return {h,mode}; });
   if(reduce||!('IntersectionObserver' in window)) return;
-  const io=new IntersectionObserver(es=>es.forEach(e=>{
-    const h=e.target;
-    if(e.isIntersecting && !h.classList.contains('shine')){
-      h.classList.add('shine');
-      h.addEventListener('animationend',()=>h.classList.remove('shine'),{once:true});
-    }
-  }),{threshold:.9,rootMargin:'0px 0px -12% 0px'});
-  document.querySelectorAll('.sec-head h2').forEach(h=>io.observe(h));
+  const play=(h,mode)=>{
+    if(h.dataset.busy) return; h.dataset.busy='1';
+    const cls=mode==='type'?'type':mode==='wave'?'wave':'shine';
+    const ms=mode==='type'?(+h.style.getPropertyValue('--n')*55+900):mode==='wave'?(+h.style.getPropertyValue('--n')*45+1100):1600;
+    h.classList.add(cls); setTimeout(()=>{h.classList.remove(cls);delete h.dataset.busy;},ms);
+  };
+  const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ const t=targets.find(x=>x.h===e.target); play(t.h,t.mode);} }),{threshold:.9,rootMargin:'0px 0px -12% 0px'});
+  targets.forEach(t=>io.observe(t.h));
 })();
 
 </script>

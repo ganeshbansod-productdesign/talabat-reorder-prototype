@@ -170,6 +170,8 @@ img{display:block}
   65%{transform:translateY(1.5px);color:#ff8a2a;-webkit-text-fill-color:#ff8a2a}
 }
 @media (prefers-reduced-motion:reduce){.sec-head h2.type .ch,.sec-head h2.wave .ch{animation:none;opacity:1}.sec-head h2.type::after{display:none}}
+.sheet-head,.grab{touch-action:none;cursor:grab}
+.sheet.dragging{transition:none!important}
 </style>
 </head>
 <body>
@@ -428,6 +430,41 @@ document.addEventListener('click',e=>{
   if(t.closest('[data-checkout]')){ toast('Checkout is not part of this prototype'); return; }
 });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeSheets(); });
+
+/* swipe down to close any bottom sheet (drag the header/handle, or pull down from the top of its content) */
+document.querySelectorAll('.sheet').forEach(function(sheet){
+  const overlay=document.getElementById('overlay');
+  let startY=0, lastY=0, lastT=0, vel=0, dy=0, active=false, dragging=false, mouse=false;
+  const scrollerOf=el=>{ for(let n=el;n&&n!==sheet;n=n.parentElement){ if(n.scrollHeight>n.clientHeight+1&&/(auto|scroll)/.test(getComputedStyle(n).overflowY)) return n; } return null; };
+  const start=(y,target,isMouse)=>{
+    if(!sheet.classList.contains('show')) return;
+    const handle=target.closest('.sheet-head,.grab'); const sc=scrollerOf(target);
+    if(isMouse&&!handle) return;                      /* mouse: only the header/handle */
+    if(!handle&&sc&&sc.scrollTop>0) return;           /* content still scrolled: let it scroll */
+    active=true; dragging=false; mouse=isMouse; startY=lastY=y; lastT=performance.now(); vel=0; dy=0;
+  };
+  const move=(y,ev)=>{
+    if(!active) return; dy=y-startY;
+    if(!dragging){ if(dy>6){ dragging=true; sheet.classList.add('dragging'); } else if(dy<-6){ active=false; return; } else return; }
+    if(ev&&ev.cancelable) ev.preventDefault();
+    const now=performance.now(); vel=(y-lastY)/Math.max(1,now-lastT); lastY=y; lastT=now;
+    const d=Math.max(0,dy); sheet.style.transform='translate(-50%,'+d+'px)';
+    overlay.style.opacity=Math.max(0,1-d/sheet.offsetHeight);
+  };
+  const end=()=>{
+    if(!active) return; active=false; if(!dragging) return; dragging=false;
+    sheet.classList.remove('dragging');
+    const close=dy>sheet.offsetHeight*0.22||vel>0.6;
+    sheet.style.transform=''; overlay.style.opacity='';
+    if(close) closeSheets();                       /* class change animates it the rest of the way down */
+  };
+  sheet.addEventListener('touchstart',e=>start(e.touches[0].clientY,e.target,false),{passive:true});
+  sheet.addEventListener('touchmove',e=>move(e.touches[0].clientY,e),{passive:false});
+  sheet.addEventListener('touchend',end); sheet.addEventListener('touchcancel',end);
+  sheet.addEventListener('mousedown',e=>start(e.clientY,e.target,true));
+  window.addEventListener('mousemove',e=>{ if(active&&mouse) move(e.clientY,e); });
+  window.addEventListener('mouseup',()=>{ if(mouse) end(); });
+});
 
 renderSections(); updateFooter();
 

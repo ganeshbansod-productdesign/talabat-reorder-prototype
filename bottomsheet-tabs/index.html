@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bottom Sheet Tabs</title>
+<style>
+:root{
+  --bg:#f3f3f4; --sheet:#fff; --text:#1f1f1f; --muted:#8a8a8f; --line:#e6e6e8;
+  --brand:#f75b00; --brand-d:#c94a00; --chip:#f1f2f4; --scrim:rgba(0,0,0,.55);
+  --note:#fff; --note-line:#e3e3e6;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#141415; --note:#1d1d1f; --note-line:#333; --line:#2d2d30}
+}
+*{box-sizing:border-box;margin:0}
+body{font-family:Inter,-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);
+  min-height:100vh;display:flex;gap:40px;align-items:center;justify-content:center;padding:24px;flex-wrap:wrap}
+
+/* device */
+.phone{width:375px;height:812px;position:relative;overflow:hidden;border-radius:36px;
+  background:#e9e5df;box-shadow:0 20px 60px rgba(0,0,0,.25);flex:none;max-width:100%}
+.scrim{position:absolute;inset:0;background:var(--scrim)}
+.sheet{position:absolute;left:0;right:0;bottom:0;top:40px;background:#fff;color:#1f1f1f;border-radius:24px 24px 0 0;
+  display:flex;flex-direction:column;overflow:hidden}
+.grab{width:44px;height:4px;border-radius:2px;background:#d6d6d9;margin:8px auto 0}
+.head{display:flex;align-items:center;gap:12px;padding:12px 16px 8px}
+.x{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#fff;display:grid;place-items:center;font-size:18px;cursor:pointer}
+.title{font-size:16px;font-weight:600}
+
+/* tabs */
+.tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid #e6e6e8;padding:0 16px;scrollbar-width:none;flex:none;background:#fff}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;width:96px;text-align:center;cursor:pointer;background:none;border:0;font:inherit;color:#8a8a8f;padding:12px 0 0}
+.tab .pic{width:64px;height:64px;border-radius:50%;background:#f1f2f4;margin:0 auto;display:grid;place-items:center;font-size:34px;
+  max-height:64px;opacity:1;overflow:hidden;transition:max-height .28s ease,opacity .2s ease,margin .28s ease}
+.tab .lbl{display:block;font-size:14px;line-height:20px;padding:8px 0 10px;transition:padding .28s ease}
+.tab .bar{display:block;height:2px;background:transparent;margin:0 auto;width:64px;transition:width .28s ease,background .2s}
+.tab.on{color:#1f1f1f}
+.tab.on .lbl{font-weight:600}
+.tab.on .bar{background:#1f1f1f}
+.tabs.collapsed .tab{width:auto;padding:0 16px 0 0}
+.tabs.collapsed .tab .pic{max-height:0;opacity:0;margin:0}
+.tabs.collapsed .tab .lbl{padding:10px 0 8px}
+.tabs.collapsed .tab .bar{width:100%}
+.tabs .tab{transition:width .28s ease,padding .28s ease}
+
+/* list */
+.list{flex:1;overflow-y:auto;padding:16px 16px 140px;scrollbar-width:none;overscroll-behavior:contain}
+.list::-webkit-scrollbar{display:none}
+.sec{font-size:16px;font-weight:700;margin:20px 0 12px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card .img{aspect-ratio:1;border-radius:14px;border:1px solid var(--line);background:#f6f7f8;display:grid;place-items:center;font-size:48px;position:relative}
+.add{position:absolute;right:6px;bottom:6px;width:36px;height:36px;border-radius:50%;background:#fff;border:0;color:var(--brand);
+  font-size:22px;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.18);cursor:pointer}
+.step{position:absolute;left:6px;bottom:6px;height:36px;border-radius:18px;background:#fff;display:flex;align-items:center;gap:10px;padding:0 10px;
+  color:var(--brand);font-size:15px;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.step b{color:#1f1f1f;font-weight:500}
+.name{font-size:13px;line-height:16px;margin-top:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:32px}
+.price{font-size:14px;font-weight:600;margin-top:4px}
+.was{font-size:11px;color:#8a8a8f;text-decoration:line-through}
+
+/* footer */
+.foot{position:absolute;left:0;right:0;bottom:0;background:#fff;box-shadow:0 -4px 12px rgba(0,0,0,.06);padding:12px 16px 26px}
+.free{display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px}
+.prog{height:4px;background:#e6e6e8;border-radius:2px;overflow:hidden}
+.prog i{display:block;height:100%;width:30%;background:#1f1f1f}
+.cta{margin-top:12px;height:50px;border-radius:25px;background:var(--brand);color:#fff;display:flex;align-items:center;padding:0 8px;gap:12px;font-weight:600}
+.cta .n{width:36px;height:36px;border-radius:50%;background:var(--brand-d);display:grid;place-items:center}
+.cta .sp{flex:1}
+.cta .p{text-align:right;line-height:1.1;padding-right:10px}
+.cta .p s{display:block;font-size:11px;font-weight:400;opacity:.9}
+.home{width:134px;height:5px;border-radius:3px;background:#1f1f1f;position:absolute;left:50%;bottom:8px;transform:translateX(-50%)}
+
+/* annotations */
+.notes{width:340px;display:flex;flex-direction:column;gap:12px}
+.state{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--note);border:1px solid var(--note-line);font-size:14px}
+.dot{width:10px;height:10px;border-radius:50%;background:#2e9d5b;transition:background .2s}
+.state[data-s=collapsed] .dot{background:var(--brand)}
+.state strong{font-weight:600}
+.note{background:var(--note);border:1px solid var(--note-line);border-radius:12px;padding:14px;font-size:13.5px;line-height:1.5}
+.note h3{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:600}
+.note ul{padding-left:18px}
+.note li{margin:3px 0}
+code{font-size:12px;background:var(--chip);color:#1f1f1f;padding:1px 5px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="scrim"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="head"><div class="x" aria-label="Close">✕</div><div class="title">Ganesh’s buy again list</div></div>
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <div class="list" id="list"></div>
+    <div class="foot">
+      <div class="free"><span>🏷️ Add Ð 65.65 to get free delivery</span><span>ⓘ</span></div>
+      <div class="prog"><i></i></div>
+      <div class="cta"><span class="n">2</span><span>Primary</span><span class="sp"></span><span class="p"><s>Ð 22</s>Ð 17.52</span></div>
+    </div>
+    <div class="home"></div>
+  </div>
+</div>
+
+<aside class="notes">
+  <div class="state" id="state" data-s="expanded"><span class="dot"></span><span>Tabs: <strong id="stateText">Expanded</strong></span></div>
+  <div class="note">
+    <h3>Interaction</h3>
+    <ul>
+      <li><strong>Scroll down</strong> the list past <code>24px</code> and the tabs collapse: images fade out, labels stay as a compact sticky bar.</li>
+      <li><strong>Scroll back to the top</strong> and the tabs expand again.</li>
+      <li><strong>Tap a tab</strong> to switch category. The list resets to the top, so the tabs expand.</li>
+      <li>The tab bar stays pinned; only the product list scrolls.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>Motion</h3>
+    <ul>
+      <li>280ms ease for height, spacing and underline width.</li>
+      <li>Hysteresis: collapse at &gt; 24px, expand at &lt; 4px, so it doesn’t flicker at the threshold.</li>
+      <li>Respects reduced motion.</li>
+    </ul>
+  </div>
+</aside>
+
+<script>
+const CATS = [
+  {id:'top', label:'Top items', icon:'🍎', items:[
+    ['🍎','Pink Lady Apple - Europe/USA, 1kg','8.76','11',2],['🥑','Avocado Hass Premium - Mexico','12.50'],['🍋','Lemon - Lebanon','48.95'],
+    ['🍊','Orange Navel - South Africa','20.50'],['🥭','Mango Palmer Half Ripe - South Africa','11.50'],['🍎','Apple Royal Gala - France','21.50'],
+    ['🍅','Persimmon - Spain, 450-550g','29.95'],['🥭','Mango Palmer Half Ripe','36.95'],['🥝','Zespri Golden Kiwi - New Zealand','22.25'],
+    ['🍇','Red Grapes Seedless - Austria','28.85'],['🍋','Lemon - Lebanon, 450-550g','7.95'],['🍐','Prickly Pears - Tunisia','32.90'],
+    ['🍌','Banana - Ecuador, 1kg','6.50'],['🍓','Strawberry - South Africa, 2 x 250g','18.00'],['🥬','Lettuce Romaine - Lebanon','5.95']]},
+  {id:'fv', label:'Fruits & veg', icon:'🥬', items:[
+    ['🥕','Carrot - Lebanon, 1kg','4.50'],['🥒','Cucumber - UAE','3.95'],['🍅','Tomato Round - Jordan','5.25'],
+    ['🥦','Broccoli - Spain','9.95'],['🌽','Sweet Corn - Egypt','4.00'],['🧅','Onion Red - India','3.50'],
+    ['🥔','Potato - Egypt, 1kg','4.25'],['🫑','Bell Pepper Mix - Netherlands','12.95'],['🍆','Eggplant - Jordan','5.75'],
+    ['🌶️','Chili Green - India','6.50'],['🍄','Mushroom White - UAE','8.95'],['🧄','Garlic - China','7.25']]},
+  {id:'bak', label:'Bakery', icon:'🥐', items:[
+    ['🍞','Bakemart Artisan Bread Norland','18.32','23'],['🥖','Modern Bakery Pain Au Lait Mini','8.99'],['🥐','Modern Bakery Cheese Croissant','2.74'],
+    ['🥐','Yaumi Plain Croissant, 55g','2.35'],['🥐','L’usine Butter Jumbo Croissant','2.88'],['🥯','Sesame Bagel, 4 pcs','9.50'],
+    ['🍞','Brown Toast Loaf','6.25'],['🧁','Vanilla Muffin, 2 pcs','11.00'],['🍩','Glazed Donut','4.50'],
+    ['🥨','Salted Pretzel','5.75'],['🍪','Choc Chip Cookies','12.95'],['🥧','Apple Pie Slice','9.95']]},
+  {id:'snk', label:'Snacks', icon:'🥨', items:[
+    ['🍿','Popcorn Sweet & Salty','6.95'],['🥜','Roasted Almonds, 200g','19.95'],['🍫','Milk Chocolate Bar','5.50'],
+    ['🥨','Mini Pretzels','7.25'],['🍪','Oat Cookies','8.50'],['🍬','Fruit Gummies','4.95'],
+    ['🥔','Potato Chips Original','4.25'],['🌰','Mixed Nuts, 250g','24.95'],['🍘','Rice Crackers','6.00']]}
+];
+const tabs=document.getElementById('tabs'), list=document.getElementById('list');
+const state=document.getElementById('state'), stateText=document.getElementById('stateText');
+let active='top', collapsed=false;
+const COLLAPSE_AT=24, EXPAND_AT=4;
+
+function setCollapsed(v){
+  if(v===collapsed) return;
+  collapsed=v;
+  tabs.classList.toggle('collapsed',v);
+  state.dataset.s=v?'collapsed':'expanded';
+  stateText.textContent=v?'Collapsed':'Expanded';
+}
+function renderTabs(){
+  tabs.innerHTML=CATS.map(c=>`<button class="tab ${c.id===active?'on':''}" role="tab" aria-selected="${c.id===active}" data-id="${c.id}">
+    <span class="pic">${c.icon}</span><span class="lbl">${c.label}</span><span class="bar"></span></button>`).join('');
+}
+function card([ic,name,price,was,qty]){
+  const ctl=qty?`<div class="step"><span>🗑</span><b>${qty}</b><span>＋</span></div>`:`<button class="add" aria-label="Add">＋</button>`;
+  return `<div class="card"><div class="img">${ic}${ctl}</div><div class="name">${name}</div>
+    <div class="price">Ð ${price}</div>${was?`<div class="was">Ð ${was}</div>`:''}</div>`;
+}
+function renderList(){
+  const c=CATS.find(x=>x.id===active);
+  const first=c.items.slice(0,6), rest=c.items.slice(6);
+  list.innerHTML=`<div class="grid">${first.map(card).join('')}</div>`+
+    (rest.length?`<div class="sec">Try something new</div><div class="grid">${rest.map(card).join('')}</div>`:'');
+  list.scrollTop=0;
+}
+tabs.addEventListener('click',e=>{
+  const t=e.target.closest('.tab'); if(!t||t.dataset.id===active) return;
+  active=t.dataset.id; renderTabs(); renderList(); setCollapsed(false);
+  tabs.querySelector('.tab.on').scrollIntoView({inline:'nearest',block:'nearest',behavior:'smooth'});
+});
+list.addEventListener('scroll',()=>{
+  const y=list.scrollTop;
+  if(!collapsed && y>COLLAPSE_AT) setCollapsed(true);
+  else if(collapsed && y<EXPAND_AT) setCollapsed(false);
+},{passive:true});
+
+renderTabs(); renderList();
+</script>
+</body>
+</html>

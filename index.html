@@ -468,15 +468,15 @@ document.querySelectorAll('.sheet').forEach(function(sheet){
 
 renderSections(); updateFooter();
 
-/* tooltip pointing at "View all": shows each time a section scrolls into view */
+/* tooltip pointing at "View all": shows once per section, the first time it scrolls into view */
 ['s1','s2'].forEach(function(id){
   const head=document.querySelector('#'+id+' .sec-head'), tip=head&&head.querySelector('.tip'), link=head&&head.querySelector('.viewall');
   if(!tip||!link) return;
-  let timer, hideTimer, dismissed=false;
-  const show=()=>{ if(dismissed) return; tip.classList.add('show'); link.classList.add('nudge'); tip.setAttribute('aria-hidden','false'); hideTimer=setTimeout(()=>hide(true),7000); };
+  let timer, hideTimer, dismissed=false, shown=false;
+  const show=()=>{ if(dismissed||shown) return; shown=true; tip.classList.add('show'); link.classList.add('nudge'); tip.setAttribute('aria-hidden','false'); hideTimer=setTimeout(()=>hide(true),7000); };
   const hide=(dismiss)=>{ clearTimeout(timer); clearTimeout(hideTimer); tip.classList.remove('show'); link.classList.remove('nudge'); tip.setAttribute('aria-hidden','true'); if(dismiss) dismissed=true; };
   const io=new IntersectionObserver(es=>es.forEach(e=>{
-    if(e.isIntersecting){ dismissed=false; clearTimeout(timer); timer=setTimeout(show,900); }
+    if(e.isIntersecting){ if(!shown){ clearTimeout(timer); timer=setTimeout(show,900); } }
     else hide(false);
   }),{threshold:.6});
   io.observe(head);

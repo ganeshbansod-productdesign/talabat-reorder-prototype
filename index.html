@@ -36,7 +36,8 @@ img{display:block}
 }
 .sec-head h2{transform-origin:left center}
 @media (prefers-reduced-motion:reduce){.sec-head h2.shine{animation:none;color:var(--ink);-webkit-text-fill-color:var(--ink)}}
-.sec-head .viewall{padding-top:5px;font-size:14px;font-weight:500;text-decoration:underline;text-underline-offset:3px}
+.sec-head .viewall{padding-top:5px;font-size:14px;font-weight:500;color:var(--ink);text-decoration:underline;text-decoration-color:var(--ink);text-underline-offset:3px}
+.sec-head .viewall:is(:hover,:active,:focus,:focus-visible,.nudge){color:var(--ink);text-decoration-color:var(--ink);outline:none}
 
 /* category tabs */
 .tabs{display:flex;gap:8px;overflow-x:auto;padding:0 16px 12px;scrollbar-width:none}
